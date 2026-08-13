@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RegTech Enterprise Knowledge Graph - Dashboard Simulator</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js for Dashboards -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Vis.js Network for Knowledge Graph Rendering -->
+  <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; background-color: #0f172a; color: #f8fafc; }
+    .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+    #network-container { width: 100%; height: 500px; border-radius: 0.5rem; background: #020617; }
+  </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+  <!-- Header -->
+  <header class="glass-panel px-6 py-4 flex justify-between items-center z-10">
+    <div class="flex items-center space-x-3">
+      <i data-lucide="shield-check" class="text-cyan-400 w-8 h-8"></i>
+      <div>
+        <h1 class="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500">
+          RegTech Enterprise Platform
+        </h1>
+        <p class="text-xs text-slate-400">DSL-Driven Investment, ESG & BVI Economic Substance Engine</p>
+      </div>
+    </div>
+    
+    <!-- Industry Context Selector -->
+    <div class="flex items-center space-x-4">
+      <label for="industrySelect" class="text-sm font-medium text-slate-300">Industry Context:</label>
+      <select id="industrySelect" onchange="switchIndustry()" class="bg-slate-800 border border-slate-600 text-cyan-300 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block p-2">
+        <option value="semiconductor">Semiconductor (半導體)</option>
+        <option value="manufacturing">Manufacturing (製造業/數字雙生)</option>
+        <option value="shipping">Shipping & Logistics (航運物流)</option>
+        <option value="renewable_energy">Renewable Energy (再生能源)</option>
+      </select>
+    </div>
+  </header>
+
+  <!-- Main Body Grid -->
+  <div class="flex-1 grid grid-cols-12 gap-4 p-4 overflow-hidden">
+    
+    <!-- Left Column: DSL Console & Parser (Cols 4) -->
+    <div class="col-span-4 flex flex-col gap-4 overflow-y-auto">
+      <!-- DSL Code Editor Panel -->
+      <div class="glass-panel p-4 rounded-xl flex flex-col">
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-sm font-semibold text-slate-200 flex items-center gap-2">
+            <i data-lucide="code" class="w-4 h-4 text-cyan-400"></i> DSL Raw Input
+          </span>
+          <button onclick="parseDSL()" class="px-3 py-1 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold text-xs rounded-md shadow transition">
+            Compile & Map
+          </button>
+        </div>
+        <textarea id="dslInput" class="w-full h-48 p-3 bg-slate-950 font-mono text-xs text-green-400 rounded-lg border border-slate-800 focus:outline-none focus:ring-1 focus:ring-cyan-500" spellcheck="false">
+system_os.pot_relayed[
+    picked_allocated{
+        dispensed_rolled_aquatic(
+            projected_sights(),
+            instant_signal()
+        ).optic_attribute_tented{
+            tempted_memory.bind_with(
+                popup_stochastic_measure()
+            )
+        }
+    }
+]
+
+core_eccentric_power_belt.ceased_os_particle_swift[
+    Jordan_decision_matrices[
+        5::cloud_attribute_spinsor()_form_session_id()
+    ]
+]
+        </textarea>
+      </div>
+
+      <!-- Semantic Layer Parser Output -->
+      <div class="glass-panel p-4 rounded-xl flex-1 flex flex-col">
+        <h2 class="text-sm font-semibold text-slate-200 mb-2 flex items-center gap-2">
+          <i data-lucide="cpu" class="w-4 h-4 text-cyan-400"></i> Semantic Parser Output
+        </h2>
+        <div id="parserLogs" class="w-full flex-1 p-3 bg-slate-950 font-mono text-xs text-slate-300 rounded-lg border border-slate-800 overflow-y-auto space-y-2">
+          <div class="text-slate-500">// Parser Initialized. Awaiting AST Mapping...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Dashboard & Knowledge Graph (Cols 8) -->
+    <div class="col-span-8 flex flex-col gap-4 overflow-y-auto">
+      
+      <!-- Top Metrics Dashboard -->
+      <div class="grid grid-cols-5 gap-3">
+        <div class="glass-panel p-3 rounded-lg border-l-4 border-emerald-500">
+          <div class="text-xs text-slate-400">Investment Score</div>
+          <div id="metricInvest" class="text-xl font-bold text-slate-100">84.2</div>
+          <div class="text-[10px] text-emerald-400">ROI-Risk Weighted</div>
+        </div>
+        <div class="glass-panel p-3 rounded-lg border-l-4 border-cyan-500">
+          <div class="text-xs text-slate-400">ESG Index</div>
+          <div id="metricESG" class="text-xl font-bold text-slate-100">A+</div>
+          <div class="text-[10px] text-cyan-400">Carbon/Energy Optimized</div>
+        </div>
+        <div class="glass-panel p-3 rounded-lg border-l-4 border-amber-500">
+          <div class="text-xs text-slate-400">Substance Status</div>
+          <div id="metricSubstance" class="text-xl font-bold text-amber-300">MEDIUM RISK</div>
+          <div class="text-[10px] text-slate-400">CIGA Gap Identified</div>
+        </div>
+        <div class="glass-panel p-3 rounded-lg border-l-4 border-blue-500">
+          <div class="text-xs text-slate-400">Evidence Graph</div>
+          <div id="metricEvidence" class="text-xl font-bold text-slate-100">100%</div>
+          <div class="text-[10px] text-blue-400">Audit Trail Ready</div>
+        </div>
+        <div class="glass-panel p-3 rounded-lg border-l-4 border-red-500">
+          <div class="text-xs text-slate-400">Regulatory Risk</div>
+          <div id="metricRisk" class="text-xl font-bold text-red-400">0.14</div>
+          <div class="text-[10px] text-slate-400">Low Breach Prob.</div>
+        </div>
+      </div>
+
+      <!-- Knowledge Graph Visualizer & Chart Row -->
+      <div class="grid grid-cols-12 gap-4">
+        <!-- Interactive Graph -->
+        <div class="col-span-8 glass-panel p-4 rounded-xl flex flex-col">
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-sm font-semibold text-slate-200 flex items-center gap-2">
+              <i data-lucide="share-2" class="w-4 h-4 text-cyan-400"></i> Enterprise Knowledge Graph
+            </span>
+            <span class="text-xs text-slate-400">Nodes & Relationships (CIGA/Evidence/ESG)</span>
+          </div>
+          <div id="network-container"></div>
+        </div>
+
+        <!-- Dynamic Chart Analytics -->
+        <div class="col-span-4 glass-panel p-4 rounded-xl flex flex-col justify-between">
+          <h2 class="text-sm font-semibold text-slate-200 mb-2 flex items-center gap-2">
+            <i data-lucide="bar-chart-3" class="w-4 h-4 text-cyan-400"></i> Industry Multi-Criteria
+          </h2>
+          <div class="relative flex-1 flex items-center justify-center">
+            <canvas id="radarChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Evidence Audit Chain Panel -->
+      <div class="glass-panel p-4 rounded-xl">
+        <h2 class="text-sm font-semibold text-slate-200 mb-3 flex items-center gap-2">
+          <i data-lucide="file-check-2" class="w-4 h-4 text-cyan-400"></i> Evidence Chain Mapping (Claim → Fact Audit Trail)
+        </h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-800/50 text-slate-400 uppercase text-[10px]">
+              <tr>
+                <th class="p-2">Claim ID</th>
+                <th class="p-2">Relevant CIGA Activity</th>
+                <th class="p-2">Mapped Node</th>
+                <th class="p-2">Evidence Status</th>
+                <th class="p-2">Document Type</th>
+              </tr>
+            </thead>
+            <tbody id="evidenceTable" class="divide-y divide-slate-800">
+              <!-- Dynamically Populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- JavaScript Logics & Interactivity -->
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // Industry Configurations Data Source
+    const industryConfigs = {
+      semiconductor: {
+        investScore: "88.5",
+        esgRating: "A+",
+        substanceRisk: "LOW RISK",
+        evidenceChain: "100%",
+        regRisk: "0.08",
+        radarData: [85, 95, 90, 75, 80],
+        radarLabels: ['IP/R&D', 'Capacity', 'Energy Eff.', 'Supply Risk', 'Substance'],
+        nodes: [
+          { id: 1, label: 'BVI Entity\n(Semi Tech Holdings)', group: 'entity' },
+          { id: 2, label: 'Activity:\nIP Management', group: 'ciga' },
+          { id: 3, label: 'Decision:\nR&D Allocation', group: 'decision' },
+          { id: 4, label: 'People:\nLead Engineers', group: 'resource' },
+          { id: 5, label: 'Premises:\nFab & Lab Space', group: 'resource' },
+          { id: 6, label: 'Evidence:\nBoard Resolution', group: 'evidence' },
+          { id: 7, label: 'ESG:\nWater/Energy Log', group: 'esg' }
+        ],
+        edges: [
+          { from: 1, to: 2, label: 'ENGAGES_IN' },
+          { from: 2, to: 3, label: 'DIRECTED_BY' },
+          { from: 3, to: 4, label: 'REQUIRES_PEOPLE' },
+          { from: 3, to: 5, label: 'USES_PREMISES' },
+          { from: 3, to: 6, label: 'VERIFIED_BY' },
+          { from: 2, to: 7, label: 'MONITORED_BY' }
+        ],
+        evidenceRows: [
+          { id: "CLM-001", activity: "Managing IP Assets", node: "R&D Team", status: "VERIFIED", doc: "Payroll & Employment Contract" },
+          { id: "CLM-002", activity: "Board Decision Making", node: "Strategic Capital", status: "VERIFIED", doc: "Signed Minutes (BVI Local Meeting)" }
+        ]
+      },
+      manufacturing: {
+        investScore: "76.4",
+        esgRating: "B+",
+        substanceRisk: "MEDIUM RISK",
+        evidenceChain: "92%",
+        regRisk: "0.19",
+        radarData: [70, 80, 60, 85, 65],
+        radarLabels: ['Digital Twin', 'Production', 'Carbon Int.', 'Supply Risk', 'Substance'],
+        nodes: [
+          { id: 1, label: 'BVI Entity\n(Global Mfg Ltd)', group: 'entity' },
+          { id: 2, label: 'Activity:\nFactory Digital Twin', group: 'ciga' },
+          { id: 3, label: 'Decision:\nProcurement Plan', group: 'decision' },
+          { id: 4, label: 'Asset:\nIoT Sensors', group: 'resource' },
+          { id: 5, label: 'Evidence:\nEnergy Invoices', group: 'evidence' }
+        ],
+        edges: [
+          { from: 1, to: 2, label: 'OPERATES' },
+          { from: 2, to: 3, label: 'INFORMS' },
+          { from: 3, to: 4, label: 'DEPLOYS' },
+          { from: 4, to: 5, label: 'GENERATES' }
+        ],
+        evidenceRows: [
+          { id: "CLM-003", activity: "Operational Control", node: "Digital Twin Sensor", status: "VERIFIED", doc: "Telemetry Log & Energy Invoices" }
+        ]
+      },
+      shipping: {
+        investScore: "81.0",
+        esgRating: "A",
+        substanceRisk: "HIGH RISK",
+        evidenceChain: "85%",
+        regRisk: "0.32",
+        radarData: [90, 75, 70, 60, 45],
+        radarLabels: ['Fleet Optimization', 'Freight Rate', 'Fuel Efficiency', 'Route Risk', 'Substance'],
+        nodes: [
+          { id: 1, label: 'BVI Entity\n(Ocean Fleet Co)', group: 'entity' },
+          { id: 2, label: 'Activity:\nShipping Business', group: 'ciga' },
+          { id: 3, label: 'Decision:\nCrewing & Routes', group: 'decision' },
+          { id: 4, label: 'Gap:\nNo Local Office', group: 'risk' }
+        ],
+        edges: [
+          { from: 1, to: 2, label: 'CLAIMS' },
+          { from: 2, to: 3, label: 'DIRECTED_BY' },
+          { from: 3, to: 4, label: 'EXPOSES' }
+        ],
+        evidenceRows: [
+          { id: "CLM-004", activity: "Vessel Management", node: "Crew Logistics", status: "GAP DETECTED", doc: "Missing BVI Local Management Record" }
+        ]
+      },
+      renewable_energy: {
+        investScore: "92.1",
+        esgRating: "AA",
+        substanceRisk: "LOW RISK",
+        evidenceChain: "98%",
+        regRisk: "0.04",
+        radarData: [95, 90, 95, 70, 85],
+        radarLabels: ['Carbon Offset', 'NPV Yield', 'Grid Tech', 'Policy Risk', 'Substance'],
+        nodes: [
+          { id: 1, label: 'BVI Entity\n(Solar Green SPV)', group: 'entity' },
+          { id: 2, label: 'Activity:\nRenewable Asset', group: 'ciga' },
+          { id: 3, label: 'Triple Integral:\nSpatial-Temporal', group: 'decision' },
+          { id: 4, label: 'Evidence:\nCarbon Credits', group: 'evidence' }
+        ],
+        edges: [
+          { from: 1, to: 2, label: 'OWNS' },
+          { from: 2, to: 3, label: 'OPTIMIZED_BY' },
+          { from: 3, to: 4, label: 'ISSUES' }
+        ],
+        evidenceRows: [
+          { id: "CLM-005", activity: "Green Energy Trading", node: "Solar Grid", status: "VERIFIED", doc: "Registry Carbon Credit Certificate" }
+        ]
+      }
+    };
+
+    // Initialize Network and Chart references
+    let network = null;
+    let radarChart = null;
+
+    // Parser Action Simulation
+    function parseDSL() {
+      const logs = document.getElementById('parserLogs');
+      logs.innerHTML = `
+        <div class="text-cyan-400">[15:32:01] Tokenizing Raw DSL Script...</div>
+        <div class="text-slate-300">Lexer: Identified system_os, Jordan_matrices, pot_kernel tokens.</div>
+        <div class="text-cyan-400">[15:32:02] Constructing Abstract Syntax Tree (AST)...</div>
+        <div class="text-slate-300">Semantic Layer: Mapping system_os → Enterprise Decision OS.</div>
+        <div class="text-slate-300">Semantic Layer: Mapping projected_sights() → Predictive Intelligence.</div>
+        <div class="text-slate-300">Semantic Layer: Mapping Jordan_decision_matrices → Multi-Criteria Decision Engine.</div>
+        <div class="text-emerald-400 font-bold">[15:32:02] Success: Semantic Layers Mapped to Knowledge Graph Nodes.</div>
+      `;
+    }
+
+    // Initialize Radar Chart
+    function initChart(labels, data) {
+      const ctx = document.getElementById('radarChart').getContext('2d');
+      if (radarChart) radarChart.destroy();
+
+      radarChart = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Evaluation Index',
+            data: data,
+            backgroundColor: 'rgba(6, 182, 212, 0.2)',
+            borderColor: 'rgba(6, 182, 212, 1)',
+            pointBackgroundColor: '#38bdf8'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            r: {
+              angleLines: { color: 'rgba(255,255,255,0.1)' },
+              grid: { color: 'rgba(255,255,255,0.1)' },
+              pointLabels: { color: '#94a3b8', font: { size: 10 } },
+              ticks: { display: false, max: 100 }
+            }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    // Initialize Vis.js Knowledge Graph Network
+    function initNetwork(nodesData, edgesData) {
+      const container = document.getElementById('network-container');
+      
+      const nodes = new vis.DataSet(nodesData.map(n => {
+        let color = '#334155';
+        if (n.group === 'entity') color = '#0284c7';
+        if (n.group === 'ciga') color = '#0d9488';
+        if (n.group === 'decision') color = '#d97706';
+        if (n.group === 'evidence') color = '#16a34a';
+        if (n.group === 'risk') color = '#dc2626';
+        if (n.group === 'esg') color = '#059669';
+
+        return {
+          id: n.id,
+          label: n.label,
+          shape: 'box',
+          margin: 10,
+          color: { background: color, border: '#475569', highlight: '#38bdf8' },
+          font: { color: '#ffffff', size: 11, face: 'Inter' }
+        };
+      }));
+
+      const edges = new vis.DataSet(edgesData.map(e => ({
+        from: e.from,
+        to: e.to,
+        label: e.label,
+        font: { color: '#64748b', size: 9, align: 'horizontal' },
+        arrows: 'to',
+        color: { color: '#334155' }
+      })));
+
+      const options = {
+        physics: { enabled: true, solver: 'forceAtlas2Based' },
+        interaction: { hover: true, zoomView: true }
+      };
+
+      network = new vis.Network(container, { nodes, edges }, options);
+    }
+
+    // Switch Context Logic
+    function switchIndustry() {
+      const industry = document.getElementById('industrySelect').value;
+      const config = industryConfigs[industry];
+
+      // Update Top Dashboards
+      document.getElementById('metricInvest').innerText = config.investScore;
+      document.getElementById('metricESG').innerText = config.esgRating;
+      document.getElementById('metricSubstance').innerText = config.substanceRisk;
+      document.getElementById('metricEvidence').innerText = config.evidenceChain;
+      document.getElementById('metricRisk').innerText = config.regRisk;
+
+      // Update Chart & Graph
+      initChart(config.radarLabels, config.radarData);
+      initNetwork(config.nodes, config.edges);
+
+      // Update Evidence Audit Table
+      const tableBody = document.getElementById('evidenceTable');
+      tableBody.innerHTML = '';
+      config.evidenceRows.forEach(row => {
+        const badgeColor = row.status === 'VERIFIED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20';
+        tableBody.innerHTML += `
+          <tr>
+            <td class="p-2 font-mono text-cyan-400">${row.id}</td>
+            <td class="p-2 font-medium">${row.activity}</td>
+            <td class="p-2">${row.node}</td>
+            <td class="p-2"><span class="px-2 py-0.5 border text-[10px] rounded-full ${badgeColor}">${row.status}</span></td>
+            <td class="p-2 text-slate-400">${row.doc}</td>
+          </tr>
+        `;
+      });
+
+      // Automatically trigger parser mapping view update
+      parseDSL();
+    }
+
+    // Document Ready Initial Loading
+    window.onload = () => {
+      switchIndustry();
+    };
+  </script>
+</body>
+</html>
